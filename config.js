@@ -1,0 +1,1 @@
+window.PLANUS_CONFIG = { url: "", anonKey: "" };
