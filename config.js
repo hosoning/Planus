@@ -1,1 +1,1 @@
-window.PLANUS_CONFIG = { url: "", anonKey: "" };
+window.PLANUS_CONFIG = { url: "https://qndiibbjadhgtapuonco.supabase.co", anonKey: "" };
