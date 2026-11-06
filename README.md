@@ -1,8 +1,10 @@
-# Planus · 想問你的事
+# Planus
 
-一本私人的「問題日記」：想到要問的問題就記下來，之後再補上回答。
+一本私人的問題日記：想到的問題先記下來，之後再補上答案。
 
-Planus 是一個**純前端、本機優先（local-first）**的單頁網頁，只有一個 `index.html`：
+介面參考 iOS 的 Liquid Glass 風格，支援淺色／深色模式，加到 iPhone 主畫面後會以獨立 App 的形式全螢幕開啟。
+
+Planus 是一個**純前端、本機優先（local-first）**的單頁網頁（`index.html`，另有主畫面圖示 `icon.png` 與 `manifest.webmanifest`）：
 
 - 不需要後端、資料庫、登入或任何 API key
 - 所有資料都存放在瀏覽器的 `localStorage` 裡
@@ -17,8 +19,8 @@ Planus 是一個**純前端、本機優先（local-first）**的單頁網頁，�
 - 隨機抽一題待回答的問題
 - 匯出／匯入 JSON 備份
 - 支援手機和桌面（響應式版面）
-- 在問題輸入框按 `Ctrl/⌘ + Enter` 可以快速保存
-- 網址加上 `?capture=1` 會自動聚焦到輸入框，適合做成手機主畫面捷徑
+- 在輸入框按 `Ctrl/⌘ + Enter` 可以快速儲存
+- 網址加上 `?capture=1` 會一打開就進入「新問題」畫面，適合做成手機主畫面捷徑
 
 ## ⚠️ 關於資料儲存（請務必閱讀）
 
@@ -26,13 +28,13 @@ Planus 是一個**純前端、本機優先（local-first）**的單頁網頁，�
 - 不同瀏覽器（例如 Safari 和 Chrome）的資料也是分開的。
 - `localStorage` 綁定**網址（網域）**。換了網址（例如從 GitHub Pages 搬到 Netlify），新網址會是空的，舊資料要先匯出再匯入。
 - 清除瀏覽器資料或網站資料、使用無痕模式，或 iOS Safari 長期（約 7 天以上）沒有開啟網站，資料都**可能被清除**。把網站「加入主畫面」後使用，被清除的機會較低，但仍然建議定期備份。
-- **請定期按「匯出備份」**，把 JSON 檔存到 iCloud Drive、Google Drive 等安全的地方。
+- **請定期按右上角 ⋯ →「匯出備份」**，把 JSON 檔存到 iCloud Drive、Google Drive 等安全的地方。
 
 ### 在不同裝置之間搬資料
 
-1. 在舊裝置按 **匯出備份**，得到 `planus-backup-YYYY-MM-DD.json`
+1. 在舊裝置按右上角 **⋯ → 匯出備份**，得到 `planus-backup-YYYY-MM-DD.json`
 2. 把檔案傳到新裝置
-3. 在新裝置開啟 Planus，按 **匯入備份**，選擇該檔案
+3. 在新裝置開啟 Planus，按右上角 **⋯ → 匯入備份**，選擇該檔案
    - **確定**：用備份完全取代目前資料
    - **取消**：合併（同一條記錄以較新的版本為準）
 
@@ -75,11 +77,11 @@ Planus 是一個**純前端、本機優先（local-first）**的單頁網頁，�
 2. Source 選 **Deploy from a branch**，Branch 選 `main`、資料夾 `/ (root)`，按 Save
 3. 幾分鐘後網址會是 `https://hosoning.github.io/Planus/`
 
-> 私人倉庫要使用 GitHub Pages 需要 GitHub Pro（付費）方案；而且 Pages 網站本身是**公開可瀏覽**的。不過這不影響隱私：網站只是一個空殼，你的問題和答案只存在你自己的瀏覽器裡，別人打開看到的是空白的本子。
+> 免費帳號只有公開倉庫可以使用 GitHub Pages（私人倉庫需要 GitHub Pro）。Pages 網站本身任何人都能打開，但這不影響隱私：網站只是一個空殼，你的問題和答案只存在你自己的瀏覽器裡，別人打開看到的是一本空白的問題本。
 
 ### 加到手機主畫面
 
-- **iPhone（Safari）**：開啟網址 → 分享 → 「加入主畫面」
+- **iPhone（Safari）**：開啟網址 → 分享 → 「加入主畫面」（會使用 Planus 圖示，並以全螢幕 App 形式開啟）
 - **Android（Chrome）**：開啟網址 → 選單 → 「加到主畫面」
 
 想要一打開就能直接輸入，可以把網址設成 `https://你的網址/?capture=1`。

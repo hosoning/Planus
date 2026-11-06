@@ -3,98 +3,271 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f8f5f1">
-<title>Planus · 想問你的事</title>
+<meta name="theme-color" content="#f4f1ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0b0b" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Planus">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Planus</title>
 <style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"Noto Serif TC",sans-serif;color:#35302d;background:#f8f5f1}
-*{box-sizing:border-box}
-body{margin:0}
-button,input,textarea{font:inherit}
-button{cursor:pointer}
-.wrap{max-width:920px;margin:auto;padding:42px 22px 90px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:15px}
-.eyebrow{letter-spacing:.22em;font-size:11px;color:#9a827c;text-transform:uppercase}
-h1{font-family:Georgia,"Songti TC",serif;font-size:clamp(32px,5vw,48px);font-weight:400;margin:12px 0}
-.muted{color:#928781;font-size:13px}
-.panel,.note{background:#fff;border:1px solid #ece6df;border-radius:17px;padding:22px;box-shadow:0 4px 18px #35221a06}
-.panel{margin:30px 0}
-textarea,input{border:1px solid #e5ddd5;border-radius:11px;background:#fff;padding:13px;width:100%;outline-color:#b89a91}
-textarea{resize:vertical;min-height:92px}
-button{border:0;border-radius:10px;padding:12px 17px;background:#5d4945;color:#fff}
-button.secondary{background:#f1ebe6;color:#62534e}
-button.danger{background:#f6e6e3;color:#a23838}
-button:disabled{opacity:.5}
-.tabs{display:flex;gap:9px;margin:24px 0;flex-wrap:wrap}
-.tabs button{background:transparent;color:#766964;border:1px solid #dfd4ca}
-.tabs button.active{background:#5d4945;color:#fff}
-.list{display:grid;gap:14px;align-items:start}
-.note{transition:box-shadow .3s,border-color .3s}
-.note.pick{border-color:#b89a91;box-shadow:0 0 0 3px #b89a9140}
-.note h3{font-weight:500;font-size:17px;line-height:1.6;margin:9px 0 15px;white-space:pre-wrap;word-break:break-word}
-.note p{white-space:pre-wrap;line-height:1.7;word-break:break-word}
-.answer{border-left:2px solid #e3d6cd;padding-left:12px;color:#5b504b}
-.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.small{font-size:12px}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.actions button{padding:8px 11px;font-size:12px}
-.edit textarea{min-height:80px;margin:6px 0 10px}
-.edit label{font-size:12px;color:#928781}
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+  --bg:#f4f1ee; --label:#1c1a19; --label2:#3c3836a6; --label3:#3c383666; --sep:#3c38361f;
+  --card:#ffffffd9; --fill:#78787814; --fill2:#7878801f;
+  --accent:#a0665a; --accent-on:#fff; --red:#e5483d;
+  --glass:#ffffff8c; --glass-edge:#ffffffb3; --glass-shadow:0 10px 34px #2a1a1424, 0 1px 3px #2a1a1414;
+  --blob1:#f2c9bd; --blob2:#d8d3f0; --blob3:#f5e3c4;
+  --r-card:26px; --ease:cubic-bezier(.32,.72,0,1);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0c0b0b; --label:#f5f2f0; --label2:#ebebf599; --label3:#ebebf54d; --sep:#5453584d;
+    --card:#1f1d1cd9; --fill:#7878802e; --fill2:#7878803d;
+    --accent:#e7a597; --accent-on:#2a1612; --red:#ff6961;
+    --glass:#2a27268c; --glass-edge:#ffffff26; --glass-shadow:0 10px 34px #00000080, 0 1px 3px #0006;
+    --blob1:#4a2a24; --blob2:#26254a; --blob3:#3d3020;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--label);font-family:var(--font);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+body{min-height:100dvh;overscroll-behavior-y:none}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
 .hide{display:none!important}
-.empty{text-align:center;padding:45px;color:#a0948d}
-.error{color:#a23838}
-.tools{display:flex;gap:8px;flex-wrap:wrap}
-.tools button{padding:10px 13px;font-size:13px}
-.search{max-width:430px;flex:1 1 240px}
-footer{margin-top:40px;text-align:center}
-@media(min-width:700px){.list{grid-template-columns:1fr 1fr}}
-@media(max-width:480px){.wrap{padding:28px 16px 70px}}
+
+/* ambient background so the glass has something to refract */
+.ambient{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.ambient i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.75}
+.ambient i:nth-child(1){width:60vmax;height:60vmax;background:var(--blob1);top:-25vmax;left:-20vmax}
+.ambient i:nth-child(2){width:50vmax;height:50vmax;background:var(--blob2);top:30vh;right:-25vmax}
+.ambient i:nth-child(3){width:45vmax;height:45vmax;background:var(--blob3);bottom:-25vmax;left:10vw}
+
+/* liquid glass material */
+.glass{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%);
+  box-shadow:inset 0 0 0 .5px var(--glass-edge),inset 0 1px 0 var(--glass-edge),var(--glass-shadow);
+}
+
+.app{max-width:680px;margin:0 auto;padding:0 18px calc(120px + env(safe-area-inset-bottom))}
+
+/* compact nav bar (appears on scroll) */
+.navbar{position:fixed;top:0;left:0;right:0;z-index:20;height:calc(48px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);
+  display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+  background:color-mix(in srgb,var(--bg) 70%,transparent);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:.5px solid var(--sep)}
+.navbar.show{opacity:1}
+
+/* large title */
+.hero{padding:calc(24px + env(safe-area-inset-top)) 4px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hero h1{font-size:34px;line-height:41px;font-weight:700;letter-spacing:.37px;margin:0}
+.hero .sub{color:var(--label2);font-size:15px;margin-top:2px}
+.circle{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none}
+.circle svg{width:20px;height:20px}
+
+/* search */
+.searchbar{display:flex;align-items:center;gap:8px;height:44px;border-radius:22px;padding:0 14px;margin:12px 0 14px}
+.searchbar svg{width:17px;height:17px;color:var(--label2);flex:none}
+.searchbar input{border:0;outline:0;background:transparent;width:100%;font-size:17px;-webkit-appearance:none}
+.searchbar input::placeholder{color:var(--label2)}
+.searchbar input::-webkit-search-cancel-button{-webkit-appearance:none}
+#clearSearch{width:20px;height:20px;border-radius:50%;background:var(--label3);color:var(--bg);font-size:12px;line-height:20px;flex:none}
+
+/* segmented control */
+.segment{position:relative;display:grid;grid-template-columns:repeat(3,1fr);padding:4px;border-radius:22px;margin-bottom:22px}
+.segment .thumb{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:18px;background:var(--card);
+  box-shadow:0 3px 10px #0000001f,inset 0 0 0 .5px var(--glass-edge);transition:transform .45s var(--ease)}
+.segment button{position:relative;z-index:1;height:36px;font-size:14px;font-weight:600;color:var(--label2);transition:color .2s}
+.segment button.active{color:var(--label)}
+.segment .n{font-weight:500;opacity:.6;margin-left:3px;font-variant-numeric:tabular-nums}
+
+/* section header */
+.section{display:flex;justify-content:space-between;align-items:baseline;padding:0 6px 8px;color:var(--label2);font-size:13px}
+
+/* cards */
+.list{display:grid;gap:12px}
+.card{position:relative;background:var(--card);border-radius:var(--r-card);padding:18px 18px 16px;text-align:left;width:100%;
+  -webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);
+  box-shadow:inset 0 0 0 .5px var(--glass-edge),0 2px 12px #2a1a140f;transition:transform .25s var(--ease),box-shadow .3s}
+.card:active{transform:scale(.98)}
+.card.pick{box-shadow:0 0 0 2.5px var(--accent),0 10px 30px #a0665a33;animation:pop .6s var(--ease)}
+@keyframes pop{0%{transform:scale(.96)}60%{transform:scale(1.02)}100%{transform:scale(1)}}
+.card .meta{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--label2);margin-bottom:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+.dot.done{background:#34c759}
+.card .q{font-size:17px;line-height:1.5;font-weight:600;white-space:pre-wrap;word-break:break-word;margin:0}
+.card .a{margin:10px 0 0;padding:10px 12px;border-radius:14px;background:var(--fill);font-size:15px;line-height:1.6;color:var(--label);white-space:pre-wrap;word-break:break-word}
+.card .a.empty{color:var(--label3);background:transparent;padding:0;font-size:14px}
+.empty-state{text-align:center;padding:70px 20px;color:var(--label2)}
+.empty-state .big{font-size:44px;margin-bottom:10px}
+.empty-state strong{display:block;color:var(--label);font-size:20px;margin-bottom:6px}
+.footnote{text-align:center;color:var(--label3);font-size:12px;margin-top:28px;line-height:1.6}
+
+/* floating bottom toolbar */
+.dock{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom));z-index:30;display:flex;justify-content:center;align-items:center;gap:10px;pointer-events:none}
+.dock>*{pointer-events:auto}
+.pill{display:flex;align-items:center;height:56px;border-radius:28px;padding:0 6px}
+.pill button{height:44px;min-width:44px;padding:0 14px;border-radius:22px;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600;color:var(--label)}
+.pill button:active{background:var(--fill2)}
+.pill svg{width:21px;height:21px}
+.fab{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-on);
+  box-shadow:inset 0 1px 0 #ffffff59,inset 0 0 0 .5px #ffffff40,0 10px 26px #a0665a66;transition:transform .25s var(--ease)}
+.fab:active{transform:scale(.92)}
+.fab svg{width:26px;height:26px}
+
+/* sheets */
+.scrim{position:fixed;inset:0;z-index:40;background:#0000004d;opacity:0;transition:opacity .35s}
+.scrim.open{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0 auto;max-width:680px;max-height:92dvh;overflow:auto;
+  border-radius:34px 34px 0 0;padding:8px 20px calc(22px + env(safe-area-inset-bottom));
+  background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(30px) saturate(190%);backdrop-filter:blur(30px) saturate(190%);
+  box-shadow:inset 0 .5px 0 var(--glass-edge),0 -10px 40px #00000026;
+  transform:translateY(105%);transition:transform .45s var(--ease)}
+.sheet.open{transform:none}
+@media(min-width:720px){.sheet{bottom:50%;border-radius:34px;transform:translateY(calc(50% + 100vh))}.sheet.open{transform:translateY(50%)}}
+.grabber{width:36px;height:5px;border-radius:3px;background:var(--label3);margin:0 auto 10px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.sheet-head h2{font-size:17px;font-weight:600;margin:0;text-align:center;flex:1}
+.sheet-head .circle{width:40px;height:40px;background:var(--fill2)}
+.sheet-head .circle.primary{background:var(--accent);color:var(--accent-on)}
+.sheet-head .circle:disabled{opacity:.35}
+.field{background:var(--card);border-radius:20px;padding:12px 14px;margin-bottom:12px;box-shadow:inset 0 0 0 .5px var(--glass-edge)}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--label2);margin-bottom:4px;letter-spacing:.02em}
+.field textarea{width:100%;border:0;outline:0;background:transparent;resize:none;font-size:17px;line-height:1.5;min-height:84px;display:block}
+.field textarea::placeholder{color:var(--label3)}
+.field .hint{font-size:12px;color:var(--label3);margin-top:4px}
+.row-btn{display:block;width:100%;height:50px;border-radius:25px;font-size:17px;font-weight:600;margin-top:6px}
+.row-btn.danger{background:var(--fill);color:var(--red)}
+.dates{color:var(--label3);font-size:12px;text-align:center;margin-top:12px}
+
+/* menu (action list) */
+.menu{background:var(--card);border-radius:20px;overflow:hidden;box-shadow:inset 0 0 0 .5px var(--glass-edge)}
+.menu button{display:flex;align-items:center;gap:14px;width:100%;padding:15px 16px;font-size:17px;text-align:left}
+.menu button+button{border-top:.5px solid var(--sep)}
+.menu button:active{background:var(--fill)}
+.menu svg{width:22px;height:22px;color:var(--accent);flex:none}
+.menu small{display:block;color:var(--label2);font-size:13px;margin-top:2px}
+
+/* toast */
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:60;max-width:calc(100% - 32px);
+  padding:12px 18px;border-radius:22px;font-size:15px;font-weight:500;text-align:center;
+  transform:translate(-50%,-160%);transition:transform .45s var(--ease)}
+.toast.show{transform:translate(-50%,0)}
+.toast.error{color:var(--red)}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-<main id="app">
-  <header class="top">
+<div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<div class="navbar" id="navbar">Planus</div>
+
+<div class="app">
+  <header class="hero" id="hero">
     <div>
-      <div class="eyebrow">Our little question book</div>
-      <h1>想問你的事。</h1>
-      <div class="muted">Questions for 李澤言</div>
+      <h1>Planus</h1>
+      <div class="sub" id="summary"></div>
     </div>
+    <button class="circle glass" id="menuBtn" aria-label="更多">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+    </button>
   </header>
 
-  <section class="panel">
-    <div class="row"><strong>突然想問你⋯</strong><span class="muted">想到就記下來</span></div>
-    <p><textarea id="question" placeholder="今天想問他什麼？"></textarea></p>
-    <div class="row"><span id="status" class="muted"></span><button id="add">保存問題</button></div>
-  </section>
+  <label class="searchbar glass">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.5-4.5"/></svg>
+    <input id="search" type="search" placeholder="搜尋" autocomplete="off" enterkeyhint="search">
+    <button id="clearSearch" class="hide" aria-label="清除">✕</button>
+  </label>
 
-  <div class="row">
-    <div class="tabs">
-      <button class="active" data-tab="pending">待回答 <span id="pendingCount"></span></button>
-      <button data-tab="answered">已回答 <span id="answeredCount"></span></button>
-      <button data-tab="all">全部 <span id="allCount"></span></button>
-    </div>
-    <button class="secondary" id="random">隨機抽一題</button>
-  </div>
+  <nav class="segment glass" id="segment">
+    <span class="thumb" id="thumb"></span>
+    <button data-tab="pending" class="active">待回答<span class="n" id="pendingCount"></span></button>
+    <button data-tab="answered">已回答<span class="n" id="answeredCount"></span></button>
+    <button data-tab="all">全部<span class="n" id="allCount"></span></button>
+  </nav>
 
-  <div class="row">
-    <input id="search" class="search" type="search" placeholder="搜尋問題或答案…">
-    <div class="tools">
-      <button id="export" class="secondary">匯出備份</button>
-      <button id="importBtn" class="secondary">匯入備份</button>
-      <input id="importFile" type="file" accept="application/json,.json" class="hide">
-    </div>
-  </div>
-  <p id="message" class="muted"></p>
+  <div class="section"><span id="sectionTitle"></span><span id="sectionCount"></span></div>
   <div id="list" class="list"></div>
 
-  <footer class="muted small">資料只儲存在這個瀏覽器裡，不會自動同步。記得定期「匯出備份」。</footer>
-</main>
+  <p class="footnote">資料只儲存在這部裝置的瀏覽器中，不會自動同步。<br>請記得定期匯出備份。</p>
 </div>
+
+<div class="dock">
+  <div class="pill glass">
+    <button id="random" aria-label="隨機抽一題">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3.5c2 0 3.2 1 4.3 2.7l2.4 4.6c1.1 1.7 2.3 2.7 4.3 2.7H21"/><path d="M3 17h3.5c1.3 0 2.3-.5 3.1-1.3M14 8.3c.8-.8 1.8-1.3 3.1-1.3H21"/><path d="m18 4 3 3-3 3M18 14l3 3-3 3"/></svg>
+      隨機
+    </button>
+  </div>
+  <button class="fab" id="compose" aria-label="新問題">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<div class="scrim hide" id="scrim"></div>
+
+<!-- edit / compose sheet -->
+<section class="sheet hide" id="editSheet" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="grabber"></div>
+  <div class="sheet-head">
+    <button class="circle" data-close aria-label="取消">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <h2 id="editTitle">新問題</h2>
+    <button class="circle primary" id="saveBtn" aria-label="儲存">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+    </button>
+  </div>
+  <div class="field">
+    <label for="fQuestion">問題</label>
+    <textarea id="fQuestion" placeholder="想到什麼，先記下來…" rows="3"></textarea>
+  </div>
+  <div class="field" id="answerField">
+    <label for="fAnswer">答案</label>
+    <textarea id="fAnswer" placeholder="還沒有答案" rows="3"></textarea>
+    <div class="hint">留空＝待回答</div>
+  </div>
+  <button class="row-btn danger hide" id="deleteBtn">刪除問題</button>
+  <div class="dates" id="dates"></div>
+</section>
+
+<!-- more menu sheet -->
+<section class="sheet hide" id="menuSheet" role="dialog" aria-modal="true" aria-label="更多">
+  <div class="grabber"></div>
+  <div class="sheet-head">
+    <span style="width:40px"></span><h2>資料</h2>
+    <button class="circle" data-close aria-label="關閉">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="menu">
+    <button id="export">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+      <span>匯出備份<small>下載 JSON 檔案</small></span>
+    </button>
+    <button id="importBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+      <span>匯入備份<small>從 JSON 檔案還原或合併</small></span>
+    </button>
+  </div>
+  <p class="footnote" style="margin-top:16px">資料只存在這部裝置的這個瀏覽器中。<br>換手機、換瀏覽器或清除網站資料前，請先匯出。</p>
+  <input id="importFile" type="file" accept="application/json,.json" class="hide">
+</section>
+
+<div class="toast glass" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const STORAGE_KEY = "planus.questions.v1";
 const $ = s => document.querySelector(s);
-let records = [], tab = "pending", editingId = null, pickedId = null;
+let records = [], tab = "pending", editingId = null, pickedId = null, openSheet = null;
+const TAB_NAMES = { pending: "待回答", answered: "已回答", all: "全部" };
 
 /* ---------- storage ---------- */
 function load(){
@@ -102,155 +275,189 @@ function load(){
     const raw = localStorage.getItem(STORAGE_KEY);
     const data = raw ? JSON.parse(raw) : [];
     records = Array.isArray(data) ? data.map(normalize).filter(Boolean) : [];
-  }catch(e){
-    records = [];
-    msg("讀取本機資料失敗：" + e.message, true);
-  }
+  }catch(e){ records = []; toast("讀取本機資料失敗：" + e.message, true); }
+  sortRecords();
 }
 function persist(){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-    return true;
-  }catch(e){
-    msg("儲存失敗（瀏覽器可能禁止本機儲存或空間不足）：" + e.message, true);
-    return false;
-  }
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); return true; }
+  catch(e){ toast("儲存失敗：瀏覽器可能禁止本機儲存或空間不足", true); return false; }
 }
-function uid(){
-  return (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-}
+function uid(){ return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function validDate(v){ if(!v) return null; const d = new Date(v); return isNaN(d) ? null : d.toISOString(); }
 function normalize(x){
   if(!x || typeof x !== "object") return null;
   const question = String(x.question ?? "").trim();
   if(!question) return null;
   const answer = x.answer == null ? null : (String(x.answer).trim() || null);
   const created_at = validDate(x.created_at) || new Date().toISOString();
-  return {
-    id: String(x.id || uid()),
-    question,
-    answer,
-    created_at,
+  return { id: String(x.id || uid()), question, answer, created_at,
     answered_at: answer ? (validDate(x.answered_at) || created_at) : null,
-    updated_at: validDate(x.updated_at) || created_at
-  };
+    updated_at: validDate(x.updated_at) || created_at };
 }
-function validDate(v){ if(!v) return null; const d = new Date(v); return isNaN(d) ? null : d.toISOString(); }
 function sortRecords(){ records.sort((a,b) => b.created_at.localeCompare(a.created_at)); }
 
-/* ---------- ui helpers ---------- */
-function msg(s, err=false){ $("#message").textContent = s; $("#message").className = err ? "error" : "muted"; }
-function escapeHtml(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function fmt(d){ return new Date(d).toLocaleDateString("zh-HK"); }
-
-function cardHtml(x){
-  const picked = x.id === pickedId ? " pick" : "";
-  if(x.id === editingId){
-    return '<article class="note edit' + picked + '" data-id="' + x.id + '">' +
-      '<div class="muted small">' + fmt(x.created_at) + '</div>' +
-      '<label>問題</label><textarea data-field="question">' + escapeHtml(x.question) + '</textarea>' +
-      '<label>他的回答（留空＝待回答）</label><textarea data-field="answer" placeholder="記下他的回答…">' + escapeHtml(x.answer || "") + '</textarea>' +
-      '<div class="actions"><button data-action="save">保存</button><button class="secondary" data-action="cancel">取消</button></div>' +
-      '</article>';
-  }
-  return '<article class="note' + picked + '" data-id="' + x.id + '">' +
-    '<div class="muted small">' + fmt(x.created_at) + (x.answered_at ? ' · 回答於 ' + fmt(x.answered_at) : '') + '</div>' +
-    '<h3>' + escapeHtml(x.question) + '</h3>' +
-    (x.answer ? '<p class="answer">' + escapeHtml(x.answer) + '</p>' : '') +
-    '<div class="actions">' +
-      '<button class="secondary" data-action="answer">' + (x.answered_at ? "修改答案" : "記錄答案") + '</button>' +
-      '<button class="secondary" data-action="edit">編輯問題</button>' +
-      '<button class="danger" data-action="delete">刪除</button>' +
-    '</div></article>';
+/* ---------- helpers ---------- */
+let toastTimer;
+function toast(s, err=false){
+  const t = $("#toast"); t.textContent = s; t.classList.toggle("error", err); t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), err ? 4000 : 2400);
 }
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function rel(d){
+  const date = new Date(d), now = new Date();
+  const days = Math.floor((new Date(now.toDateString()) - new Date(date.toDateString())) / 864e5);
+  if(days === 0) return "今天 " + date.toLocaleTimeString("zh-HK", { hour: "2-digit", minute: "2-digit", hour12: false });
+  if(days === 1) return "昨天";
+  if(days < 7) return days + " 天前";
+  return date.toLocaleDateString("zh-HK", date.getFullYear() === now.getFullYear() ? { month: "numeric", day: "numeric" } : undefined);
+}
+function full(d){ return new Date(d).toLocaleString("zh-HK", { dateStyle: "medium", timeStyle: "short", hour12: false }); }
 
+/* ---------- render ---------- */
 function render(){
-  const pending = records.filter(x => !x.answered_at), answered = records.filter(x => x.answered_at);
-  $("#pendingCount").textContent = pending.length;
-  $("#answeredCount").textContent = answered.length;
+  const pending = records.filter(x => !x.answered_at).length, answered = records.length - pending;
+  $("#pendingCount").textContent = pending;
+  $("#answeredCount").textContent = answered;
   $("#allCount").textContent = records.length;
+  $("#summary").textContent = records.length ? pending + " 個問題等待答案" : "你的問題本";
+  const idx = ["pending","answered","all"].indexOf(tab);
+  $("#thumb").style.transform = "translateX(" + idx * 100 + "%)";
   document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+
   const q = $("#search").value.trim().toLowerCase();
+  $("#clearSearch").classList.toggle("hide", !q);
   const shown = records.filter(x =>
     (tab === "all" || (tab === "pending" && !x.answered_at) || (tab === "answered" && x.answered_at)) &&
-    (!q || (x.question + " " + (x.answer || "")).toLowerCase().includes(q))
-  );
-  $("#list").innerHTML = shown.length ? shown.map(cardHtml).join("")
-    : '<div class="empty">' + (q ? "找不到符合的記錄。" : "這裡還沒有記錄。") + '</div>';
-}
+    (!q || (x.question + " " + (x.answer || "")).toLowerCase().includes(q)));
 
-function focusEditor(id, field){
-  const el = document.querySelector('[data-id="' + id + '"] textarea[data-field="' + field + '"]');
-  if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
-}
+  $("#sectionTitle").textContent = q ? "搜尋結果" : TAB_NAMES[tab];
+  $("#sectionCount").textContent = shown.length ? shown.length + " 項" : "";
 
-/* ---------- actions ---------- */
-$("#add").onclick = () => {
-  const q = $("#question").value.trim();
-  if(!q) return;
-  const now = new Date().toISOString();
-  records.unshift({ id: uid(), question: q, answer: null, created_at: now, answered_at: null, updated_at: now });
-  if(!persist()){ records.shift(); return; }
-  $("#question").value = "";
-  $("#status").textContent = "已保存 ✓";
-  setTimeout(() => $("#status").textContent = "", 2000);
-  tab = "pending"; render();
-};
-$("#question").addEventListener("keydown", e => {
-  if(e.key === "Enter" && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $("#add").click(); }
-});
-
-document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
-$("#search").oninput = render;
-
-$("#list").onclick = e => {
-  const b = e.target.closest("button[data-action]");
-  if(!b) return;
-  const id = b.closest("[data-id]").dataset.id;
-  const x = records.find(v => v.id === id);
-  if(!x) return;
-  const action = b.dataset.action;
-
-  if(action === "delete"){
-    if(!confirm("確定刪除這條記錄？刪除後無法復原。")) return;
-    const backup = records.slice();
-    records = records.filter(v => v.id !== id);
-    if(!persist()) records = backup;
-    if(editingId === id) editingId = null;
-    render(); return;
-  }
-  if(action === "edit" || action === "answer"){
-    editingId = id; render();
-    focusEditor(id, action === "edit" ? "question" : "answer");
+  if(!shown.length){
+    const msg = q ? ["🔍","沒有結果","試試其他關鍵字。"]
+      : !records.length ? ["✦","還沒有問題","按下方的 ＋ 寫下第一個問題。"]
+      : tab === "pending" ? ["✓","全部都有答案了","想到新問題時，再按 ＋ 記下來。"]
+      : ["✦","這裡還是空的",""];
+    $("#list").innerHTML = '<div class="empty-state"><div class="big">' + msg[0] + '</div><strong>' + msg[1] + '</strong>' + msg[2] + '</div>';
     return;
   }
-  if(action === "cancel"){ editingId = null; render(); return; }
-  if(action === "save"){
-    const card = b.closest("[data-id]");
-    const q = card.querySelector('[data-field="question"]').value.trim();
-    const a = card.querySelector('[data-field="answer"]').value.trim();
-    if(!q){ msg("問題不能是空的。", true); return; }
-    const old = { ...x };
-    const now = new Date().toISOString();
-    x.question = q;
-    x.answer = a || null;
-    x.answered_at = a ? (x.answered_at || now) : null;
-    x.updated_at = now;
-    if(!persist()){ Object.assign(x, old); return; }
-    editingId = null; msg(""); render();
-  }
+  $("#list").innerHTML = shown.map(x =>
+    '<button class="card' + (x.id === pickedId ? " pick" : "") + '" data-id="' + esc(x.id) + '">' +
+      '<div class="meta"><span class="dot' + (x.answered_at ? " done" : "") + '"></span>' +
+        (x.answered_at ? "已回答 · " + rel(x.answered_at) : rel(x.created_at)) + '</div>' +
+      '<p class="q">' + esc(x.question) + '</p>' +
+      (x.answer ? '<p class="a">' + esc(x.answer) + '</p>' : '<p class="a empty">輕點以記錄答案</p>') +
+    '</button>').join("");
+}
+
+/* ---------- sheets ---------- */
+function showSheet(id){
+  if(openSheet) closeSheet(true);
+  openSheet = $(id);
+  $("#scrim").classList.remove("hide"); openSheet.classList.remove("hide");
+  requestAnimationFrame(() => requestAnimationFrame(() => { $("#scrim").classList.add("open"); openSheet.classList.add("open"); }));
+  document.documentElement.style.overflow = "hidden";
+}
+function closeSheet(instant){
+  if(!openSheet) return;
+  const s = openSheet; openSheet = null;
+  s.classList.remove("open"); $("#scrim").classList.remove("open");
+  document.documentElement.style.overflow = "";
+  const done = () => { s.classList.add("hide"); if(!openSheet) $("#scrim").classList.add("hide"); };
+  instant ? done() : setTimeout(done, 380);
+  editingId = null;
+}
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeSheet());
+$("#scrim").onclick = () => closeSheet();
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeSheet(); });
+
+// swipe the grabber area down to dismiss
+document.querySelectorAll(".sheet").forEach(s => {
+  let y0 = null;
+  s.addEventListener("touchstart", e => { if(s.scrollTop <= 0 && e.target.closest(".grabber,.sheet-head")) y0 = e.touches[0].clientY; }, { passive: true });
+  s.addEventListener("touchmove", e => { if(y0 === null) return; const dy = Math.max(0, e.touches[0].clientY - y0); s.style.transition = "none"; s.style.transform = "translateY(" + dy + "px)"; }, { passive: true });
+  s.addEventListener("touchend", e => { if(y0 === null) return; const dy = e.changedTouches[0].clientY - y0; y0 = null; s.style.transition = ""; s.style.transform = ""; if(dy > 110) closeSheet(); });
+});
+
+function autosize(t){ t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, window.innerHeight * .35) + "px"; }
+["#fQuestion","#fAnswer"].forEach(s => $(s).addEventListener("input", e => { autosize(e.target); updateSave(); }));
+function updateSave(){ $("#saveBtn").disabled = !$("#fQuestion").value.trim(); }
+
+function openEditor(x, focus){
+  editingId = x ? x.id : null;
+  $("#editTitle").textContent = x ? (x.answered_at ? "問題" : "待回答") : "新問題";
+  $("#fQuestion").value = x ? x.question : "";
+  $("#fAnswer").value = x?.answer || "";
+  $("#answerField").classList.toggle("hide", !x);
+  $("#deleteBtn").classList.toggle("hide", !x);
+  $("#dates").textContent = x ? "建立於 " + full(x.created_at) + (x.answered_at ? "　·　回答於 " + full(x.answered_at) : "") : "";
+  updateSave();
+  showSheet("#editSheet");
+  const id = x ? x.id : null;
+  setTimeout(() => {
+    ["#fQuestion","#fAnswer"].forEach(s => autosize($(s)));
+    if(editingId !== id || !openSheet) return;
+    const el = $(focus || "#fQuestion"); el.focus(); el.setSelectionRange(el.value.length, el.value.length);
+  }, 60);
+  // keep editingId set by this call (showSheet → closeSheet may have cleared it)
+  editingId = id;
+}
+
+$("#compose").onclick = () => openEditor(null);
+$("#list").onclick = e => {
+  const c = e.target.closest(".card"); if(!c) return;
+  const x = records.find(v => v.id === c.dataset.id); if(!x) return;
+  openEditor(x, x.answered_at ? "#fQuestion" : "#fAnswer");
 };
 
+$("#saveBtn").onclick = () => {
+  const q = $("#fQuestion").value.trim();
+  if(!q) return;
+  const now = new Date().toISOString();
+  if(editingId){
+    const x = records.find(v => v.id === editingId); if(!x) return closeSheet();
+    const old = { ...x }, a = $("#fAnswer").value.trim();
+    x.question = q; x.answer = a || null; x.answered_at = a ? (x.answered_at || now) : null; x.updated_at = now;
+    if(!persist()){ Object.assign(x, old); return; }
+    toast(a && !old.answer ? "已記錄答案" : "已儲存");
+  }else{
+    records.unshift({ id: uid(), question: q, answer: null, created_at: now, answered_at: null, updated_at: now });
+    if(!persist()){ records.shift(); return; }
+    tab = "pending"; $("#search").value = "";
+    toast("已加入待回答");
+  }
+  closeSheet(); render();
+};
+$("#fQuestion").addEventListener("keydown", e => { if(e.key === "Enter" && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $("#saveBtn").click(); } });
+$("#fAnswer").addEventListener("keydown", e => { if(e.key === "Enter" && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $("#saveBtn").click(); } });
+
+$("#deleteBtn").onclick = () => {
+  if(!editingId || !confirm("確定刪除這個問題？刪除後無法復原。")) return;
+  const backup = records.slice();
+  records = records.filter(v => v.id !== editingId);
+  if(!persist()){ records = backup; return; }
+  closeSheet(); render(); toast("已刪除");
+};
+
+/* ---------- filters / search ---------- */
+document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+$("#search").oninput = render;
+$("#clearSearch").onclick = e => { e.preventDefault(); $("#search").value = ""; render(); $("#search").focus(); };
+
+/* ---------- random ---------- */
 $("#random").onclick = () => {
   const p = records.filter(x => !x.answered_at);
-  if(!p.length){ msg("目前沒有待回答的問題。"); return; }
+  if(!p.length){ toast("目前沒有待回答的問題"); return; }
   const x = p[Math.floor(Math.random() * p.length)];
   pickedId = x.id; tab = "pending"; $("#search").value = "";
-  msg("今天抽到：「" + x.question + "」");
   render();
-  document.querySelector('[data-id="' + x.id + '"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
-  setTimeout(() => { pickedId = null; document.querySelector(".note.pick")?.classList.remove("pick"); }, 4000);
+  document.querySelector('.card[data-id="' + CSS.escape(x.id) + '"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+  toast("抽到了這一題 ✦");
+  setTimeout(() => { pickedId = null; document.querySelector(".card.pick")?.classList.remove("pick"); }, 3500);
 };
 
+/* ---------- backup ---------- */
+$("#menuBtn").onclick = () => showSheet("#menuSheet");
 $("#export").onclick = () => {
   const payload = { app: "planus", version: 1, exported_at: new Date().toISOString(), questions: records };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -259,31 +466,26 @@ $("#export").onclick = () => {
   a.download = "planus-backup-" + new Date().toISOString().slice(0,10) + ".json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  msg("已匯出 " + records.length + " 條記錄。");
+  closeSheet(); toast("已匯出 " + records.length + " 個問題");
 };
-
 $("#importBtn").onclick = () => $("#importFile").click();
 $("#importFile").onchange = async e => {
-  const file = e.target.files[0];
-  e.target.value = "";
+  const file = e.target.files[0]; e.target.value = "";
   if(!file) return;
   let data;
   try{ data = JSON.parse(await file.text()); }
-  catch(err){ msg("無法讀取這個檔案，請確認是 Planus 匯出的 JSON。", true); return; }
-  // 支援新格式 {questions:[...]}，也支援舊版（Supabase 版本）直接匯出的陣列
+  catch{ toast("無法讀取檔案，請確認是 Planus 匯出的 JSON", true); return; }
   const list = Array.isArray(data) ? data : (Array.isArray(data?.questions) ? data.questions : null);
-  if(!list){ msg("檔案格式不正確：找不到問題列表。", true); return; }
+  if(!list){ toast("檔案格式不正確：找不到問題列表", true); return; }
   const incoming = list.map(normalize).filter(Boolean);
-  if(!incoming.length){ msg("檔案裡沒有可匯入的問題。", true); return; }
+  if(!incoming.length){ toast("檔案裡沒有可匯入的問題", true); return; }
 
-  const replace = records.length && confirm(
-    "檔案內有 " + incoming.length + " 條記錄。\n\n按「確定」：用備份完全取代目前的 " + records.length + " 條記錄。\n按「取消」：合併（相同的記錄以較新的版本為準）。"
-  );
+  const replace = records.length > 0 && confirm(
+    "備份檔內有 " + incoming.length + " 個問題。\n\n「確定」：用備份完全取代目前的 " + records.length + " 個問題\n「取消」：合併（同一個問題以較新的版本為準）");
   const backup = records.slice();
   let added = 0, updated = 0;
-  if(replace){
-    records = incoming;
-  }else{
+  if(replace) records = incoming;
+  else{
     const byId = new Map(records.map(r => [r.id, r]));
     for(const r of incoming){
       const cur = byId.get(r.id);
@@ -293,16 +495,18 @@ $("#importFile").onchange = async e => {
     records = [...byId.values()];
   }
   sortRecords();
-  if(!persist()){ records = backup; render(); return; }
-  editingId = null; render();
-  msg(replace ? "已用備份取代，共 " + records.length + " 條記錄。"
-              : "匯入完成：新增 " + added + " 條，更新 " + updated + " 條。");
+  if(!persist()){ records = backup; return; }
+  closeSheet(); render();
+  toast(replace ? "已還原 " + records.length + " 個問題" : "已合併：新增 " + added + "，更新 " + updated);
 };
 
-window.addEventListener("storage", e => { if(e.key === STORAGE_KEY){ load(); sortRecords(); render(); } });
+/* ---------- compact nav on scroll ---------- */
+new IntersectionObserver(([e]) => $("#navbar").classList.toggle("show", !e.isIntersecting), { rootMargin: "-40px 0px 0px 0px" }).observe($("#hero h1"));
 
-load(); sortRecords(); render();
-if(location.search.includes("capture=1")) setTimeout(() => $("#question").focus(), 200);
+window.addEventListener("storage", e => { if(e.key === STORAGE_KEY){ load(); render(); } });
+
+load(); render();
+if(new URLSearchParams(location.search).has("capture")) setTimeout(() => openEditor(null), 250);
 </script>
 </body>
 </html>

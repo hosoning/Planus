@@ -1,0 +1,12 @@
+{
+  "name": "Planus",
+  "short_name": "Planus",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f1ee",
+  "theme_color": "#f4f1ee",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
