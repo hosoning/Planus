@@ -1,30 +1,308 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f8f5f1"><title>Planus · 想問你的事</title>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f8f5f1">
+<title>Planus · 想問你的事</title>
 <style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"Noto Serif TC",sans-serif;color:#35302d;background:#f8f5f1}*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}button{cursor:pointer}.wrap{max-width:920px;margin:auto;padding:42px 22px 90px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px}.eyebrow{letter-spacing:.22em;font-size:11px;color:#9a827c;text-transform:uppercase}h1{font-family:Georgia,"Songti TC",serif;font-size:clamp(32px,5vw,48px);font-weight:400;margin:12px 0}.muted{color:#928781;font-size:13px}.panel,.note{background:#fff;border:1px solid #ece6df;border-radius:17px;padding:22px;box-shadow:0 4px 18px #35221a06}.panel{margin:30px 0}.capture{display:flex;gap:10px}textarea,input{border:1px solid #e5ddd5;border-radius:11px;background:#fff;padding:13px;width:100%;outline-color:#b89a91}textarea{resize:vertical;min-height:92px}button{border:0;border-radius:10px;padding:12px 17px;background:#5d4945;color:#fff}button.secondary{background:#f1ebe6;color:#62534e}button:disabled{opacity:.5}.tabs{display:flex;gap:9px;margin:24px 0;flex-wrap:wrap}.tabs button{background:transparent;color:#766964;border:1px solid #dfd4ca}.tabs button.active{background:#5d4945;color:#fff}.list{display:grid;gap:14px}.note h3{font-weight:500;font-size:17px;line-height:1.6;margin:9px 0 15px;white-space:pre-wrap}.note p{white-space:pre-wrap;line-height:1.7}.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.small{font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{padding:8px 11px;font-size:12px}.hide{display:none!important}.empty{text-align:center;padding:45px;color:#a0948d}.error{color:#a23838}#login{max-width:420px;margin:80px auto}.counter{font-size:13px;color:#968680}@media(min-width:700px){.list{grid-template-columns:1fr 1fr}}@media(max-width:480px){.wrap{padding:28px 16px 70px}.capture{flex-direction:column}} </style>
-</head><body><div class="wrap">
-<section id="login" class="panel hide"><div class="eyebrow">Private journal</div><h1>Planus.</h1><p class="muted">使用你的私人邮箱登录，问题与答案只属于你。</p><input id="email" type="email" placeholder="Email"><p><button id="send">发送登录链接</button></p><p id="loginmsg" class="muted"></p></section>
-<main id="app" class="hide"><header class="top"><div><div class="eyebrow">Our little question book</div><h1>想問你的事。</h1><div class="muted">Questions for 李澤言</div></div><button id="logout" class="secondary small">退出</button></header>
-<section class="panel"><div class="row"><strong>突然想問你⋯</strong><span class="muted">想到就記下來</span></div><p><textarea id="question" placeholder="今天想問他什麼？"></textarea></p><div class="row"><span id="status" class="muted"></span><button id="add">保存問題</button></div></section>
-<div class="row"><div class="tabs"><button class="active" data-tab="pending">待回答 <span id="pendingCount"></span></button><button data-tab="answered">已回答 <span id="answeredCount"></span></button><button data-tab="all">全部</button></div><button class="secondary" id="random">隨機抽一題</button></div>
-<div class="row"><input id="search" placeholder="搜尋問題或答案…" style="max-width:430px"><button id="export" class="secondary">匯出備份</button></div><p id="message" class="muted"></p><div id="list" class="list"></div></main>
-<section id="setup" class="panel hide"><h1>Planus.</h1><p>請先在 <code>config.js</code> 填寫 Supabase Project URL 與公開 anon key，再部署網站。</p><p class="muted">不要在這裡放 service_role key。</p></section></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./config.js"></script><script>
-const cfg=window.PLANUS_CONFIG||{};const $=s=>document.querySelector(s);let db,user,records=[],tab="pending";
-const msg=(s,err=false)=>{$("#message").textContent=s;$("#message").className=err?"error":"muted"};
-function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function show(which){["login","app","setup"].forEach(id=>$("#"+id).classList.toggle("hide",id!==which))}
-async function init(){if(!cfg.url||!cfg.anonKey){show("setup");return}db=supabase.createClient(cfg.url,cfg.anonKey);const {data:{session}}=await db.auth.getSession();user=session?.user;show(user?"app":"login");if(user)await load();db.auth.onAuthStateChange(async(_,s)=>{user=s?.user;show(user?"app":"login");if(user)await load()});if(location.search.includes("capture=1"))setTimeout(()=>$("#question")?.focus(),200)}
-async function load(){const {data,error}=await db.from("questions").select("*").order("created_at",{ascending:false});if(error){msg(error.message,true);return}records=data||[];render()}
-function render(){const p=records.filter(x=>!x.answered_at),a=records.filter(x=>x.answered_at);$("#pendingCount").textContent=p.length;$("#answeredCount").textContent=a.length;document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));const q=$("#search").value.toLowerCase();const shown=records.filter(x=>(tab==="all"||tab==="pending"&&!x.answered_at||tab==="answered"&&x.answered_at)&&((x.question+" "+(x.answer||"")).toLowerCase().includes(q)));$("#list").innerHTML=shown.length?shown.map(x=>'<article class="note" data-id="'+x.id+'"><div class="muted small">'+new Date(x.created_at).toLocaleDateString("zh-HK")+'</div><h3>'+escapeHtml(x.question)+'</h3>'+(x.answer?'<p>'+escapeHtml(x.answer)+'</p>':'')+'<div class="actions"><button class="secondary" data-action="answer">'+(x.answered_at?"修改答案":"記錄答案")+'</button><button class="secondary" data-action="edit">編輯問題</button><button class="secondary" data-action="delete">刪除</button></div></article>').join(""):'<div class="empty">這裡還沒有記錄。</div>'}
-async function savePatch(id,patch){const {error}=await db.from("questions").update(patch).eq("id",id);if(error){msg(error.message,true);return}await load()}
-$("#send").onclick=async()=>{const email=$("#email").value.trim();if(!email)return;const {error}=await db.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});$("#loginmsg").textContent=error?error.message:"請查看郵箱中的登入連結。"};
-$("#logout").onclick=()=>db.auth.signOut();
-$("#add").onclick=async()=>{const q=$("#question").value.trim();if(!q)return;$("#add").disabled=true;const {error}=await db.from("questions").insert({user_id:user.id,question:q});$("#add").disabled=false;if(error){$("#status").textContent=error.message;return}$("#question").value="";$("#status").textContent="已保存 ✓";tab="pending";await load()};
-document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});
-$("#search").oninput=render;
-$("#list").onclick=async e=>{const b=e.target.closest("button[data-action]");if(!b)return;const id=b.closest("[data-id]").dataset.id,x=records.find(v=>v.id===id);if(!x)return;const action=b.dataset.action;if(action==="delete"){if(confirm("確定刪除這條記錄？")){const {error}=await db.from("questions").delete().eq("id",id);if(error)msg(error.message,true);else await load()}return}if(action==="edit"){const v=prompt("修改問題",x.question);if(v?.trim())await savePatch(id,{question:v.trim()})}if(action==="answer"){const v=prompt("記錄他的回答（清空可改回待回答）",x.answer||"");if(v!==null)await savePatch(id,{answer:v.trim()||null,answered_at:v.trim()?x.answered_at||new Date().toISOString():null})}};
-$("#random").onclick=()=>{const p=records.filter(x=>!x.answered_at);if(!p.length){msg("目前沒有待回答的問題");return}const x=p[Math.floor(Math.random()*p.length)];msg("今天抽到：「"+x.question+"」")};
-$("#export").onclick=()=>{const blob=new Blob([JSON.stringify(records,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="planus-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
-init();
-</script></body></html>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Noto Serif TC",sans-serif;color:#35302d;background:#f8f5f1}
+*{box-sizing:border-box}
+body{margin:0}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.wrap{max-width:920px;margin:auto;padding:42px 22px 90px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.eyebrow{letter-spacing:.22em;font-size:11px;color:#9a827c;text-transform:uppercase}
+h1{font-family:Georgia,"Songti TC",serif;font-size:clamp(32px,5vw,48px);font-weight:400;margin:12px 0}
+.muted{color:#928781;font-size:13px}
+.panel,.note{background:#fff;border:1px solid #ece6df;border-radius:17px;padding:22px;box-shadow:0 4px 18px #35221a06}
+.panel{margin:30px 0}
+textarea,input{border:1px solid #e5ddd5;border-radius:11px;background:#fff;padding:13px;width:100%;outline-color:#b89a91}
+textarea{resize:vertical;min-height:92px}
+button{border:0;border-radius:10px;padding:12px 17px;background:#5d4945;color:#fff}
+button.secondary{background:#f1ebe6;color:#62534e}
+button.danger{background:#f6e6e3;color:#a23838}
+button:disabled{opacity:.5}
+.tabs{display:flex;gap:9px;margin:24px 0;flex-wrap:wrap}
+.tabs button{background:transparent;color:#766964;border:1px solid #dfd4ca}
+.tabs button.active{background:#5d4945;color:#fff}
+.list{display:grid;gap:14px;align-items:start}
+.note{transition:box-shadow .3s,border-color .3s}
+.note.pick{border-color:#b89a91;box-shadow:0 0 0 3px #b89a9140}
+.note h3{font-weight:500;font-size:17px;line-height:1.6;margin:9px 0 15px;white-space:pre-wrap;word-break:break-word}
+.note p{white-space:pre-wrap;line-height:1.7;word-break:break-word}
+.answer{border-left:2px solid #e3d6cd;padding-left:12px;color:#5b504b}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.small{font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions button{padding:8px 11px;font-size:12px}
+.edit textarea{min-height:80px;margin:6px 0 10px}
+.edit label{font-size:12px;color:#928781}
+.hide{display:none!important}
+.empty{text-align:center;padding:45px;color:#a0948d}
+.error{color:#a23838}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools button{padding:10px 13px;font-size:13px}
+.search{max-width:430px;flex:1 1 240px}
+footer{margin-top:40px;text-align:center}
+@media(min-width:700px){.list{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.wrap{padding:28px 16px 70px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<main id="app">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Our little question book</div>
+      <h1>想問你的事。</h1>
+      <div class="muted">Questions for 李澤言</div>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="row"><strong>突然想問你⋯</strong><span class="muted">想到就記下來</span></div>
+    <p><textarea id="question" placeholder="今天想問他什麼？"></textarea></p>
+    <div class="row"><span id="status" class="muted"></span><button id="add">保存問題</button></div>
+  </section>
+
+  <div class="row">
+    <div class="tabs">
+      <button class="active" data-tab="pending">待回答 <span id="pendingCount"></span></button>
+      <button data-tab="answered">已回答 <span id="answeredCount"></span></button>
+      <button data-tab="all">全部 <span id="allCount"></span></button>
+    </div>
+    <button class="secondary" id="random">隨機抽一題</button>
+  </div>
+
+  <div class="row">
+    <input id="search" class="search" type="search" placeholder="搜尋問題或答案…">
+    <div class="tools">
+      <button id="export" class="secondary">匯出備份</button>
+      <button id="importBtn" class="secondary">匯入備份</button>
+      <input id="importFile" type="file" accept="application/json,.json" class="hide">
+    </div>
+  </div>
+  <p id="message" class="muted"></p>
+  <div id="list" class="list"></div>
+
+  <footer class="muted small">資料只儲存在這個瀏覽器裡，不會自動同步。記得定期「匯出備份」。</footer>
+</main>
+</div>
+
+<script>
+const STORAGE_KEY = "planus.questions.v1";
+const $ = s => document.querySelector(s);
+let records = [], tab = "pending", editingId = null, pickedId = null;
+
+/* ---------- storage ---------- */
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const data = raw ? JSON.parse(raw) : [];
+    records = Array.isArray(data) ? data.map(normalize).filter(Boolean) : [];
+  }catch(e){
+    records = [];
+    msg("讀取本機資料失敗：" + e.message, true);
+  }
+}
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    return true;
+  }catch(e){
+    msg("儲存失敗（瀏覽器可能禁止本機儲存或空間不足）：" + e.message, true);
+    return false;
+  }
+}
+function uid(){
+  return (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+}
+function normalize(x){
+  if(!x || typeof x !== "object") return null;
+  const question = String(x.question ?? "").trim();
+  if(!question) return null;
+  const answer = x.answer == null ? null : (String(x.answer).trim() || null);
+  const created_at = validDate(x.created_at) || new Date().toISOString();
+  return {
+    id: String(x.id || uid()),
+    question,
+    answer,
+    created_at,
+    answered_at: answer ? (validDate(x.answered_at) || created_at) : null,
+    updated_at: validDate(x.updated_at) || created_at
+  };
+}
+function validDate(v){ if(!v) return null; const d = new Date(v); return isNaN(d) ? null : d.toISOString(); }
+function sortRecords(){ records.sort((a,b) => b.created_at.localeCompare(a.created_at)); }
+
+/* ---------- ui helpers ---------- */
+function msg(s, err=false){ $("#message").textContent = s; $("#message").className = err ? "error" : "muted"; }
+function escapeHtml(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmt(d){ return new Date(d).toLocaleDateString("zh-HK"); }
+
+function cardHtml(x){
+  const picked = x.id === pickedId ? " pick" : "";
+  if(x.id === editingId){
+    return '<article class="note edit' + picked + '" data-id="' + x.id + '">' +
+      '<div class="muted small">' + fmt(x.created_at) + '</div>' +
+      '<label>問題</label><textarea data-field="question">' + escapeHtml(x.question) + '</textarea>' +
+      '<label>他的回答（留空＝待回答）</label><textarea data-field="answer" placeholder="記下他的回答…">' + escapeHtml(x.answer || "") + '</textarea>' +
+      '<div class="actions"><button data-action="save">保存</button><button class="secondary" data-action="cancel">取消</button></div>' +
+      '</article>';
+  }
+  return '<article class="note' + picked + '" data-id="' + x.id + '">' +
+    '<div class="muted small">' + fmt(x.created_at) + (x.answered_at ? ' · 回答於 ' + fmt(x.answered_at) : '') + '</div>' +
+    '<h3>' + escapeHtml(x.question) + '</h3>' +
+    (x.answer ? '<p class="answer">' + escapeHtml(x.answer) + '</p>' : '') +
+    '<div class="actions">' +
+      '<button class="secondary" data-action="answer">' + (x.answered_at ? "修改答案" : "記錄答案") + '</button>' +
+      '<button class="secondary" data-action="edit">編輯問題</button>' +
+      '<button class="danger" data-action="delete">刪除</button>' +
+    '</div></article>';
+}
+
+function render(){
+  const pending = records.filter(x => !x.answered_at), answered = records.filter(x => x.answered_at);
+  $("#pendingCount").textContent = pending.length;
+  $("#answeredCount").textContent = answered.length;
+  $("#allCount").textContent = records.length;
+  document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  const q = $("#search").value.trim().toLowerCase();
+  const shown = records.filter(x =>
+    (tab === "all" || (tab === "pending" && !x.answered_at) || (tab === "answered" && x.answered_at)) &&
+    (!q || (x.question + " " + (x.answer || "")).toLowerCase().includes(q))
+  );
+  $("#list").innerHTML = shown.length ? shown.map(cardHtml).join("")
+    : '<div class="empty">' + (q ? "找不到符合的記錄。" : "這裡還沒有記錄。") + '</div>';
+}
+
+function focusEditor(id, field){
+  const el = document.querySelector('[data-id="' + id + '"] textarea[data-field="' + field + '"]');
+  if(el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+}
+
+/* ---------- actions ---------- */
+$("#add").onclick = () => {
+  const q = $("#question").value.trim();
+  if(!q) return;
+  const now = new Date().toISOString();
+  records.unshift({ id: uid(), question: q, answer: null, created_at: now, answered_at: null, updated_at: now });
+  if(!persist()){ records.shift(); return; }
+  $("#question").value = "";
+  $("#status").textContent = "已保存 ✓";
+  setTimeout(() => $("#status").textContent = "", 2000);
+  tab = "pending"; render();
+};
+$("#question").addEventListener("keydown", e => {
+  if(e.key === "Enter" && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $("#add").click(); }
+});
+
+document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+$("#search").oninput = render;
+
+$("#list").onclick = e => {
+  const b = e.target.closest("button[data-action]");
+  if(!b) return;
+  const id = b.closest("[data-id]").dataset.id;
+  const x = records.find(v => v.id === id);
+  if(!x) return;
+  const action = b.dataset.action;
+
+  if(action === "delete"){
+    if(!confirm("確定刪除這條記錄？刪除後無法復原。")) return;
+    const backup = records.slice();
+    records = records.filter(v => v.id !== id);
+    if(!persist()) records = backup;
+    if(editingId === id) editingId = null;
+    render(); return;
+  }
+  if(action === "edit" || action === "answer"){
+    editingId = id; render();
+    focusEditor(id, action === "edit" ? "question" : "answer");
+    return;
+  }
+  if(action === "cancel"){ editingId = null; render(); return; }
+  if(action === "save"){
+    const card = b.closest("[data-id]");
+    const q = card.querySelector('[data-field="question"]').value.trim();
+    const a = card.querySelector('[data-field="answer"]').value.trim();
+    if(!q){ msg("問題不能是空的。", true); return; }
+    const old = { ...x };
+    const now = new Date().toISOString();
+    x.question = q;
+    x.answer = a || null;
+    x.answered_at = a ? (x.answered_at || now) : null;
+    x.updated_at = now;
+    if(!persist()){ Object.assign(x, old); return; }
+    editingId = null; msg(""); render();
+  }
+};
+
+$("#random").onclick = () => {
+  const p = records.filter(x => !x.answered_at);
+  if(!p.length){ msg("目前沒有待回答的問題。"); return; }
+  const x = p[Math.floor(Math.random() * p.length)];
+  pickedId = x.id; tab = "pending"; $("#search").value = "";
+  msg("今天抽到：「" + x.question + "」");
+  render();
+  document.querySelector('[data-id="' + x.id + '"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+  setTimeout(() => { pickedId = null; document.querySelector(".note.pick")?.classList.remove("pick"); }, 4000);
+};
+
+$("#export").onclick = () => {
+  const payload = { app: "planus", version: 1, exported_at: new Date().toISOString(), questions: records };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "planus-backup-" + new Date().toISOString().slice(0,10) + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  msg("已匯出 " + records.length + " 條記錄。");
+};
+
+$("#importBtn").onclick = () => $("#importFile").click();
+$("#importFile").onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if(!file) return;
+  let data;
+  try{ data = JSON.parse(await file.text()); }
+  catch(err){ msg("無法讀取這個檔案，請確認是 Planus 匯出的 JSON。", true); return; }
+  // 支援新格式 {questions:[...]}，也支援舊版（Supabase 版本）直接匯出的陣列
+  const list = Array.isArray(data) ? data : (Array.isArray(data?.questions) ? data.questions : null);
+  if(!list){ msg("檔案格式不正確：找不到問題列表。", true); return; }
+  const incoming = list.map(normalize).filter(Boolean);
+  if(!incoming.length){ msg("檔案裡沒有可匯入的問題。", true); return; }
+
+  const replace = records.length && confirm(
+    "檔案內有 " + incoming.length + " 條記錄。\n\n按「確定」：用備份完全取代目前的 " + records.length + " 條記錄。\n按「取消」：合併（相同的記錄以較新的版本為準）。"
+  );
+  const backup = records.slice();
+  let added = 0, updated = 0;
+  if(replace){
+    records = incoming;
+  }else{
+    const byId = new Map(records.map(r => [r.id, r]));
+    for(const r of incoming){
+      const cur = byId.get(r.id);
+      if(!cur){ byId.set(r.id, r); added++; }
+      else if(r.updated_at > cur.updated_at){ byId.set(r.id, r); updated++; }
+    }
+    records = [...byId.values()];
+  }
+  sortRecords();
+  if(!persist()){ records = backup; render(); return; }
+  editingId = null; render();
+  msg(replace ? "已用備份取代，共 " + records.length + " 條記錄。"
+              : "匯入完成：新增 " + added + " 條，更新 " + updated + " 條。");
+};
+
+window.addEventListener("storage", e => { if(e.key === STORAGE_KEY){ load(); sortRecords(); render(); } });
+
+load(); sortRecords(); render();
+if(location.search.includes("capture=1")) setTimeout(() => $("#question").focus(), 200);
+</script>
+</body>
+</html>

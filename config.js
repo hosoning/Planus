@@ -1,1 +1,0 @@
-window.PLANUS_CONFIG = { url: "https://qndiibbjadhgtapuonco.supabase.co", anonKey: "" };
